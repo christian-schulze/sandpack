@@ -78,6 +78,7 @@ export interface SandpackProviderProps {
   skipEval?: boolean;
   fileResolver?: FileResolver;
   externalResources?: string[];
+  alwaysIncludeTranspiledSource?: boolean;
 }
 
 /**
@@ -421,6 +422,7 @@ class SandpackProvider extends React.PureComponent<
         showErrorScreen: !this.errorScreenRegistered.current,
         showLoadingScreen: !this.loadingScreenRegistered.current,
         reactDevTools: this.state.reactDevTools,
+        alwaysIncludeTranspiledSource: this.props.alwaysIncludeTranspiledSource,
       }
     );
 

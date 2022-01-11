@@ -14,6 +14,7 @@ import type {
   ListenerFunction,
   SandpackError,
   ReactDevToolsMode,
+  TranspiledModule,
 } from "./types";
 import {
   createPackageJSON,
@@ -52,6 +53,10 @@ export interface ClientOptions {
    * If we should skip the third step: evaluation.
    */
   skipEval?: boolean;
+  /**
+   * Skip compilation and use pre transpiled modules instead.
+   */
+  usePreTranspiledModules?: boolean;
 
   /**
    * Boolean flags to trigger certain UI elements in the bundler
@@ -75,6 +80,11 @@ export interface ClientOptions {
   };
 
   reactDevTools?: ReactDevToolsMode;
+
+  /**
+   * Always include transpiled code when dispatching state message
+   */
+  alwaysIncludeTranspiledSource?: boolean;
 }
 
 export interface SandboxInfo {
@@ -94,6 +104,8 @@ export interface SandboxInfo {
    * to AWS.
    */
   disableDependencyPreprocessing?: boolean;
+
+  transpiledModules?: Record<string, TranspiledModule>;
 }
 
 const BUNDLER_URL =
@@ -279,27 +291,43 @@ export class SandpackClient {
       {}
     );
 
-    this.dispatch({
-      type: "compile",
-      codesandbox: true,
-      version: 3,
-      isInitializationCompile,
-      modules,
-      reactDevTools: this.options.reactDevTools,
-      externalResources: this.options.externalResources || [],
-      hasFileResolver: Boolean(this.options.fileResolver),
-      disableDependencyPreprocessing:
+    if (this.options.usePreTranspiledModules) {
+      this.dispatch({
+        type: "injectTranspiledModules",
+        disableDependencyPreprocessing:
         this.sandboxInfo.disableDependencyPreprocessing,
-      template:
-        this.sandboxInfo.template ||
-        getTemplate(packageJSON, normalizedModules),
-      showOpenInCodeSandbox: this.options.showOpenInCodeSandbox ?? true,
-      showErrorScreen: this.options.showErrorScreen ?? true,
-      showLoadingScreen: this.options.showLoadingScreen ?? true,
-      skipEval: this.options.skipEval || false,
-      clearConsoleDisabled: !this.options.clearConsoleOnFirstCompile,
-      logLevel: this.options.logLevel,
-    });
+        externalResources: this.options.externalResources || [],
+        hasFileResolver: Boolean(this.options.fileResolver),
+        modules,
+        reactDevTools: this.options.reactDevTools,
+        template:
+          this.sandboxInfo.template ||
+          getTemplate(packageJSON, normalizedModules),
+        transpiledModules: this.sandboxInfo.transpiledModules || {},
+      });
+    } else {
+      this.dispatch({
+        type: "compile",
+        codesandbox: true,
+        version: 3,
+        isInitializationCompile,
+        modules,
+        reactDevTools: this.options.reactDevTools,
+        externalResources: this.options.externalResources || [],
+        hasFileResolver: Boolean(this.options.fileResolver),
+        disableDependencyPreprocessing:
+        this.sandboxInfo.disableDependencyPreprocessing,
+        template:
+          this.sandboxInfo.template ||
+          getTemplate(packageJSON, normalizedModules),
+        showOpenInCodeSandbox: this.options.showOpenInCodeSandbox ?? true,
+        showErrorScreen: this.options.showErrorScreen ?? true,
+        showLoadingScreen: this.options.showLoadingScreen ?? true,
+        skipEval: this.options.skipEval || false,
+        clearConsoleDisabled: !this.options.clearConsoleOnFirstCompile,
+        logLevel: this.options.logLevel,
+      });
+    }
   }
 
   public dispatch(message: SandpackMessage): void {

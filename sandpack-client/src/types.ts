@@ -184,6 +184,7 @@ export type SandpackMessage = BaseSandpackMessage &
         clearConsoleDisabled?: boolean;
         reactDevTools?: ReactDevToolsMode;
         logLevel?: SandpackLogLevel;
+        alwaysIncludeTranspiledSource?: boolean;
       }
     | {
         type: "refresh";
@@ -199,5 +200,15 @@ export type SandpackMessage = BaseSandpackMessage &
       }
     | {
         type: "activate-react-devtools";
+      }
+    | {
+        type: "injectTranspiledModules";
+        disableDependencyPreprocessing?: boolean;
+        externalResources: string[];
+        hasFileResolver: boolean;
+        modules: Modules;
+        reactDevTools?: ReactDevToolsMode;
+        template?: string | ITemplate;
+        transpiledModules: Record<string, TranspiledModule>;
       }
   );
